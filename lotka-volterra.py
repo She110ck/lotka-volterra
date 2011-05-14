@@ -22,12 +22,8 @@ def main():
         dy_i/dt = nu_y * Sum(y_j - y_i)
 
     """
-    geta = lambda: random.choice(range(5, 100, 5))
-    getr = lambda w: [geta() for i in xrange(w)]
-    getm = lambda w, h: [getr(w) for i in xrange(h)]
-
     b = 0.5
-    c = 0.5
+    c = 1
     a_0 = 1
     omega = 1
     nu_x = 1
@@ -35,6 +31,10 @@ def main():
     geom_w = 3
     geom_h = 3
     dt = 0.001
+
+    choices = range(5, 100, 5)
+    getr = lambda w: [random.choice(choices) for i in xrange(w)]
+    getm = lambda w, h: [getr(w) for i in xrange(h)]
     x_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
     y_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
 
@@ -86,8 +86,9 @@ def solve_one(k1, k2, w, h, v):
     def geta(i, j, sibs):
         n = rc_to_n(i, j)
         return k1(n) if i == j else (k2(n) if n in sibs else 0)
-    getr = lambda i: [geta(i, j, siblings(rc_to_n(i, i), w)) for j in xrange(w)]
-    getm = lambda: [getr(i) for i in xrange(h)]
+    rank = xrange(w * h)
+    getr = lambda i: [geta(i, j, siblings(rc_to_n(i, i), w)) for j in rank]
+    getm = lambda: [getr(i) for i in rank]
     A = np.array(getm(), np.float)
     B = v
     return np.linalg.solve(A, B)
