@@ -33,12 +33,11 @@ def main():
     dt = 0.001
 
     choices = range(5, 100, 5)
-    getr = lambda w: [random.choice(choices) for i in xrange(w)]
-    getm = lambda w, h: [getr(w) for i in xrange(h)]
+    getm = lambda w, h: [random.choice(choices) for i in range(w * h)]
     x_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
     y_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
 
-    t, X, Y = solve(b, c, a_0, omega, nu_x, nu_y, geom_w, geom_h, dt, x_0, y_0)
+    t, x, y = solve(b, c, a_0, omega, nu_x, nu_y, geom_w, geom_h, dt, x_0, y_0)
 
     plot.grid(True)
     plot.xlabel('Time')
@@ -68,12 +67,11 @@ siblings = lambda n, w: filter(partial(lt, 0), so(n, w) if odd(n) else se(n, w))
 
 def solve_step(a, b, c, nu_x, nu_y, w, h, dt, x, y):
     n_siblings = lambda n: len(siblings(n, w))
-    n_to_rc = lambda n: divmod(n, w)
     dt_nu_x = dt * nu_x
     dt_nu_y = dt * nu_y
-    k1_x = lambda n: dt * (a - y[n_to_rc(n)]) - 1 - n_siblings(n) * dt_nu_x
+    k1_x = lambda n: dt * (a - y[n]) - 1 - n_siblings(n) * dt_nu_x
     k2_x = lambda n: dt_nu_x
-    k1_y = lambda n: dt * (b * x[n_to_rc(n)] - c) - 1 - n_siblings(n) * dt_nu_y
+    k1_y = lambda n: dt * (b * x[n] - c) - 1 - n_siblings(n) * dt_nu_y
     k2_y = lambda n: dt_nu_y
     x = solve_one(k1_x, k2_x, w, h, x)
     y = solve_one(k1_y, k2_y, w, h, y)
@@ -81,13 +79,10 @@ def solve_step(a, b, c, nu_x, nu_y, w, h, dt, x, y):
 
 
 def solve_one(k1, k2, w, h, v):
-    rc_to_n = lambda r, c: r * w + c
-    def geta(i, j, sibs):
-        n = rc_to_n(i, j)
-        return k1(n) if i == j else (k2(n) if n in sibs else 0)
-    rank = xrange(w * h)
-    getr = lambda i: [geta(i, j, siblings(rc_to_n(i, i), w)) for j in rank]
-    getm = lambda: [getr(i) for i in rank]
+    rank = w * h
+    geta = lambda i, j, s: k1(j) if i == j else (k2(j) if j in s else 0)
+    getr = lambda i: [geta(i, j, siblings(i, w)) for j in xrange(rank)]
+    getm = lambda: [getr(i) for i in xrange(rank)]
     A = np.array(getm(), np.float)
     B = v
     return np.linalg.solve(A, B)
