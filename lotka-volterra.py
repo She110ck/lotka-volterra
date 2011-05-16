@@ -38,12 +38,11 @@ def main():
     x_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
     y_0 = np.array(getm(geom_w, geom_h), dtype=np.int32)
 
+    t, X, Y = solve(b, c, a_0, omega, nu_x, nu_y, geom_w, geom_h, dt, x_0, y_0)
+
     plot.grid(True)
     plot.xlabel('Time')
     plot.ylabel('Amount')
-    t, X, Y = solve(b, c, a_0, omega, nu_x, nu_y, geom_w, geom_h, dt, x_0, y_0)
-    x = map(lambda xs: xs.sum(), X)
-    y = map(lambda ys: ys.sum(), Y)
     p1, p2 = plot.plot(t, x, 'g-', t, y, 'r-')
     plot.legend([p1, p2], ['prey', 'predators'])
     plot.show()
@@ -58,7 +57,7 @@ def solve(b, c, a_0, omega, nu_x, nu_y, w, h, dt, x_0, y_0):
         a = a_0 * (1 + np.sin(omega * t))
         x, y = solve_step(a, b, c, nu_x, nu_y, w, h, dt, X[i], Y[i])
         map(lambda (A, a): A.append(a), [(T, t), (X, x), (Y, y)])
-    return T, X, Y
+    return T, map(lambda xs: xs.sum(), X), map(lambda ys: ys.sum(), Y)
 
 
 odd = lambda n: n % 2 == 0
