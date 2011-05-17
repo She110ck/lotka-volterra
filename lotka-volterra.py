@@ -1,7 +1,5 @@
 #!/usr/bin/python2
 import random
-from operator import lt
-from functools import partial
 import numpy as np
 import matplotlib.pylab as plot
 
@@ -59,14 +57,16 @@ def solve(b, c, a_0, omega, nu_x, nu_y, w, h, dt, x_0, y_0):
     return T, map(lambda xs: xs.sum(), X), map(lambda ys: ys.sum(), Y)
 
 
-odd = lambda n: n % 2 == 0
-so = lambda n, w: [n-w-w, n-w-1, n-w, n+w-1, n+w, n+w+w]
-se = lambda n, w: [n-w-w, n-w, n-w+1, n+w, n+w+1, n+w+w]
-siblings = lambda n, w: filter(partial(lt, 0), so(n, w) if odd(n) else se(n, w))
+l = lambda n, w: (n / w) % 2 == 0
+edge = lambda n, w: n % w == 0 and l(n, w) or n % w == w - 1 and not l(n, w)
+all_siblings = lambda n, w: ([n-w-w, n-w, n+w, n+w+w] if edge(n, w)
+                        else [n-w-w, n-w-1, n-w, n+w-1, n+w, n+w+w] if l(n, w)
+                        else [n-w-w, n-w, n-w+1, n+w, n+w+1, n+w+w])
+siblings = lambda n, w, h: filter(lambda s: 0 <= s < w * h, all_siblings(n, w))
 
 
 def solve_step(a, b, c, nu_x, nu_y, w, h, dt, x, y):
-    n_siblings = lambda n: len(siblings(n, w))
+    n_siblings = lambda n: len(siblings(n, w, h))
     dt_nu_x = dt * nu_x
     dt_nu_y = dt * nu_y
     k1_x = lambda n: dt * (a - y[n]) - 1 - n_siblings(n) * dt_nu_x
@@ -81,7 +81,7 @@ def solve_step(a, b, c, nu_x, nu_y, w, h, dt, x, y):
 def solve_one(k1, k2, w, h, v):
     rank = w * h
     geta = lambda i, j, s: k1(j) if i == j else (k2(j) if j in s else 0)
-    getr = lambda i: [geta(i, j, siblings(i, w)) for j in xrange(rank)]
+    getr = lambda i: [geta(i, j, siblings(i, w, h)) for j in xrange(rank)]
     getm = lambda: [getr(i) for i in xrange(rank)]
     A = np.array(getm(), np.float)
     B = v
