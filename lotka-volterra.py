@@ -84,7 +84,7 @@ def solve_one(k1, k2, w, h, v):
     getr = lambda i: [geta(i, j, siblings(i, w, h)) for j in xrange(rank)]
     getm = lambda: [getr(i) for i in xrange(rank)]
     A = np.array(getm(), np.float)
-    B = v
+    B = np.array(-v, np.float)
     return np.linalg.solve(A, B)
 
 
